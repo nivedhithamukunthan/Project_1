@@ -149,10 +149,6 @@ def channel_table(channel_name_single):
     #connection
     mycursor=connection.cursor()
 
-    #drop_table="drop table if exists YoutubeChannels"
-    #mycursor.execute(drop_table)
-    #connection.commit()
-
     try:
         query='''create table Channels(
                                             Channel_name varchar(100),
@@ -286,11 +282,7 @@ def video_table(channel_name_single):
 def comments_table(channel_name_single):
     connection=mysql.connector.connect(host="localhost",user="root",password="12345",database="youtube_project")
     mycursor=connection.cursor()
-
-    #drop_table="drop table if exists YoutubeComments"
-    #mycursor.execute(drop_table)
-    #connection.commit()
-
+    
     try:
         query='''create table Comments(
                                             Comment_Id varchar(100) primary key,
