@@ -142,12 +142,16 @@ mycursor=connection.cursor()
 
 
 
-def channel_table():
+def channel_table(channel_name_single):
 #Creating table for channel details in sql 
 
     connection=mysql.connector.connect(host="localhost",user="root",password="12345",database="youtube_project")
     #connection
     mycursor=connection.cursor()
+
+    #drop_table="drop table if exists YoutubeChannels"
+    #mycursor.execute(drop_table)
+    #connection.commit()
 
     try:
         query='''create table Channels(
@@ -161,20 +165,19 @@ def channel_table():
         mycursor.execute(query)
         connection.commit()
     except:
-        es="Table already exist"
-        print(es)
+        print("Table already exist")
 
     #Converting Mongo datas to DataFrame
     import pandas as pd
     db=connection1["Youtube_Project"]
     col2=db["Channels"]
-    channel_list=[]
-    for chan_data in col2.find({},{"_id":0,"Channels":1}):
-        channel_list.append(chan_data["Channels"])
-        df=pd.DataFrame(channel_list)
+    single_channel_list=[]
+    for chan_data in col2.find({"Channels.Channel_name":channel_name_single},{"_id":0}):
+        single_channel_list.append(chan_data["Channels"])
+    df_single_channel_list=pd.DataFrame(single_channel_list)
 
     #Inserting DataFrame to SQl
-    for i,r in df.iterrows():
+    for i,r in df_single_channel_list.iterrows():
         query='insert into Channels(Channel_name,Channel_id,Subscribers,Channel_Desc,Views,Tot_Videos,Playlist) values(%s,%s,%s,%s,%s,%s,%s)'
         values=(r['Channel_name'],
                 r['Channel_id'],
@@ -187,12 +190,11 @@ def channel_table():
             mycursor.execute(query,values)
             connection.commit()
         except:
-            es=("Channel Data already exist")
-            print(es)
+            print("Data already exist")
 
 #Creating table for Video details in sql
-#Creating table for Video details in sql
-def video_table():
+
+def video_table(channel_name_single):
     connection=mysql.connector.connect(host="localhost",user="root",password="12345",database="youtube_project")
     #connection
     mycursor=connection.cursor()
@@ -222,20 +224,20 @@ def video_table():
 
     #Mongo to DF
     import pandas as pd
-    vi_list=[]
     db=connection1["Youtube_Project"]
     col2=db["Channels"]
-    for vi_data in col2.find({},{"_id":0,"Videos":1}):
-        for i in range(len(vi_data["Videos"])):
-            vi_list.append(vi_data["Videos"][i])
-    df1=pd.DataFrame(vi_list)
+    single_video_list=[]
+    for chan_data in col2.find({"Channels.Channel_name":channel_name_single},{"_id":0}):
+        for i in range(len(chan_data["Videos"])):
+            single_video_list.append(chan_data["Videos"][i])
+    df_single_video_list=pd.DataFrame(single_video_list)
 
 
     #Inserting df to sql
 
     import pandas as pd
 
-    for i,r in df1.iterrows():
+    for i,r in df_single_video_list.iterrows():
         video_query='''insert into Videos(
                                                 Channel_name,
                                                 Channel_Id,
@@ -272,16 +274,22 @@ def video_table():
         try:
             mycursor.execute(video_query,video_values)
             connection.commit()
-        except:
-            print("Data already exist")
+        except Exception as es:
+            print(es)
                                             
+                                          
                                               
                 
 #Table for comments
 
-def comments_table():
+#Table for comments
+def comments_table(channel_name_single):
     connection=mysql.connector.connect(host="localhost",user="root",password="12345",database="youtube_project")
     mycursor=connection.cursor()
+
+    #drop_table="drop table if exists YoutubeComments"
+    #mycursor.execute(drop_table)
+    #connection.commit()
 
     try:
         query='''create table Comments(
@@ -296,16 +304,18 @@ def comments_table():
         print("Table already exist")
 
     #Mongo to df
-    comment_list=[]
+    import pandas as pd
     db=connection1["Youtube_Project"]
     col2=db["Channels"]
-    for com_data in col2.find({},{"_id":0,"Comments":1}):
-        for i in range(len(com_data["Comments"])):
-            comment_list.append(com_data["Comments"][i])
-    df2=pd.DataFrame(comment_list)
+    single_comments_list=[]
+    for chan_data in col2.find({"Channels.Channel_name":channel_name_single},{"_id":0}):
+        for i in range(len(chan_data["Comments"])):
+            single_comments_list.append(chan_data["Comments"][i])
+    df_single_comment_list=pd.DataFrame(single_comments_list)
+
 
     #inserting df to sql table
-    for i,r in df2.iterrows():
+    for i,r in df_single_comment_list.iterrows():
         query='insert into Comments(Comment_Id,Video_id,Comment_Text,comment_Author,Comment_Publised) values(%s,%s,%s,%s,%s)'
         values=(r['Comment_Id'],
                 r['Video_id'],
@@ -315,19 +325,23 @@ def comments_table():
         try:
             mycursor.execute(query,values)
             connection.commit()
-        except:
-            print("Data already exist")
+        except Exception as es:
+            print(es)
         
 
-def table_for_channel():
-    channel_table()
-    return "Table for channel created successfully"
-def table_for_video():
-    video_table()
-    return "Table for video created successfully"
-def table_for_comment():
-    comments_table()
-    return "Table for comment created successfully"
+
+def table_for_channel(channel_names):
+    channel_table(channel_names)
+    x=f"Table for {channel_names} channel created successfully"
+    return x
+def table_for_video(channel_names):
+    video_table(channel_names)
+    x=f"Table for {channel_names} channel's video created successfully"
+    return x
+def table_for_comment(channel_names):
+    comments_table(channel_names)
+    x=f"Table for {channel_names} channel's comment created successfully"
+    return x
 
    
 
@@ -340,6 +354,7 @@ def show_channels_table():
         channel_list.append(channel_data["Channels"])
     df=st.dataframe(channel_list)
     return df
+    
 
 
 def show_video_table():
@@ -366,12 +381,12 @@ def show_comment_table():
 #StreamLit
 with st.sidebar:
     from PIL import Image
-    st.title("Youtube Project")
+    st.title(":red[Youtube Project]")
     image=Image.open(r"C:\Users\mukun\Desktop\logo.png")
     st.image(image)
-tab_title=["Migration of Datas",
-           "Tables",
-           "Questions"]
+tab_title=[":blue[Migration of Datas]",
+           ":blue[Tables]",
+           ":blue[Questions]"]
 tabs=st.tabs(tab_title)
 
 with tabs[0]:
@@ -389,17 +404,25 @@ with tabs[0]:
         else:
             insert=channel_information_for_mongo(channel_id_streamlit)
             st.success(insert)
+    
+    channel_names=[]
+    db=connection1["Youtube_Project"]
+    col2=db["Channels"]
+    for channel_names_data in col2.find({},{"_id":0,"Channels":1}):
+        channel_names.append(channel_names_data["Channels"]["Channel_name"])
+
+    single_channel=st.selectbox("Show channel names",channel_names)
 
     image3=Image.open(r"C:\Users\mukun\Desktop\sql_logo.png")
     st.image(image3,width=50)
     if st.button("Migrate to sql"):
-            Table1=table_for_channel()
+            Table1=table_for_channel(single_channel)
             st.success(Table1)
 
-            Table2=table_for_video()
+            Table2=table_for_video(single_channel)
             st.success(Table2)
     
-            Table3=table_for_comment()
+            Table3=table_for_comment(single_channel)
             st.success(Table3)
 with tabs[1]:
     show_table=st.radio("Select the tables",("CHANNELS","VIDEOS","COMMENTS"))
@@ -409,6 +432,8 @@ with tabs[1]:
         show_video_table()
     if show_table=="COMMENTS":
         show_comment_table()
+    
+
 
 #Sql connection for 10 questions:
 
